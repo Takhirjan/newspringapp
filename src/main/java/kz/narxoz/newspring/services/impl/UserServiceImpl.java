@@ -1,19 +1,34 @@
 package kz.narxoz.newspring.services.impl;
 
+
+import kz.narxoz.newspring.entities.Roles;
 import kz.narxoz.newspring.entities.Users;
+import kz.narxoz.newspring.repositories.RoleRepository;
 import kz.narxoz.newspring.repositories.UserRepository;
 import kz.narxoz.newspring.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.config.web.servlet.oauth2.client.OAuth2ClientSecurityMarker;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import javax.management.relation.Role;
+import java.util.ArrayList;
 
 @Service
 public class UserServiceImpl implements UserService {
 
   @Autowired
   private UserRepository userRepository;
+
+@Autowired
+private RoleRepository roleRepository;
+
+  @Autowired
+  private BCryptPasswordEncoder passwordEncoder;
+
 
   @Override
   public UserDetails loadUserByUsername(String s) throws UsernameNotFoundException {
@@ -31,6 +46,23 @@ public class UserServiceImpl implements UserService {
   @Override
   public Users getUserByEmail(String email) {
     return userRepository.findByEmail(email);
+  }
+
+  @Override
+  public Users createUser(Users user) {
+    Users checkUser=userRepository.findByEmail(user.getEmail());
+    if(checkUser==null){
+Roles role =roleRepository.findByRole("ROLE_USER");
+if(role!=null){
+  ArrayList<Roles> roles =new ArrayList<>();
+  roles.add(role);
+  user.setRoles(roles);
+
+  user.setPassword(passwordEncoder.encode(user.getPassword()));
+  return userRepository.save(user);
+}
+    }
+    return null;
   }
 }
 

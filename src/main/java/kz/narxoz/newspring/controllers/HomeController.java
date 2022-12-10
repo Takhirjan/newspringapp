@@ -121,8 +121,9 @@ if(item!=null){
 
 }
 
-return "redirect:/edititem/"+id;
+return "redirect:/";
   }
+
 
   @PostMapping(value = "/deleteitem")
   @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_MODERATOR')")
@@ -160,6 +161,28 @@ return "redirect:/edititem/"+id;
     }
     return "redirect:/";
 }
+  @PostMapping(value = "/reassigncategory")
+  @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_MODERATOR')")
+
+  public String reassignCategory(@RequestParam(name="item_id") Long itemId,
+                               @RequestParam(name="category_id") Long categoryId){
+    Categories cat =itemService.getCategory(categoryId);
+    if(cat!=null){
+      ShopItems item=itemService.getItem(itemId);
+      if(item!=null){
+        List<Categories> categories=item.getCategories();
+        if(categories!=null){
+          categories.remove(cat);
+        }
+
+
+        itemService.saveItem(item);
+        return "redirect:/edititem/"+itemId;
+
+      }
+    }
+    return "redirect:/";
+  }
 @GetMapping(value = "/403")
   public String accessDenied(Model model){
   model.addAttribute("currentUser",getUserData());
@@ -184,6 +207,30 @@ return "redirect:/edititem/"+id;
     model.addAttribute("countries",countries);
     return "additem";
   }
+  @GetMapping(value = "/register")
+  public String register(Model model){
+    model.addAttribute("currentUser",getUserData());
+    return "register";
+  }
+
+  @PostMapping(value = "/register")
+  public String toRegister(@RequestParam(name="user_email") String email,
+                           @RequestParam(name="user_password") String password,
+                           @RequestParam(name="re_user_password") String rePassword,
+                           @RequestParam(name="user_full_name") String fullname){
+    if(password.equals(rePassword)){
+      Users newUser=new Users();
+      newUser.setFullName(fullname);
+      newUser.setPassword(password);
+      newUser.setEmail(email);
+      if(userService.createUser(newUser)!=null){
+        return "redirect:/register?success";
+      }
+     }
+    return "redirect:/register?error";
+  }
+
+
 private Users getUserData(){
   Authentication authentication= SecurityContextHolder.getContext().getAuthentication();
 if(!(authentication instanceof AnonymousAuthenticationToken)){
